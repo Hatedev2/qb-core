@@ -522,6 +522,16 @@ end
 ---@param source any
 ---@param item string
 function QBCore.Functions.UseItem(source, item)
+    if GetResourceState('hate-dzinventory') == 'started' then
+        -- hate-dzinventory handles item use itself; this runs the registered callback for callers that ask.
+        local usable = QBCore.Functions.CanUseItem(type(item) == 'table' and item.name or item)
+        local callback = type(usable) == 'table' and (usable.func or usable.cb) or usable
+        if callback then
+            local itemData = type(item) == 'table' and item or { name = item }
+            return callback(source, itemData)
+        end
+        return
+    end
     if GetResourceState('qb-inventory') == 'missing' then return end
     exports['qb-inventory']:UseItem(source, item)
 end
@@ -719,6 +729,9 @@ end
 ---@param amount number
 ---@return boolean
 function QBCore.Functions.HasItem(source, items, amount)
+    if GetResourceState('hate-dzinventory') == 'started' then
+        return exports['hate-dzinventory']:HasItem(source, items, amount)
+    end
     if GetResourceState('qb-inventory') == 'missing' then return end
     return exports['qb-inventory']:HasItem(source, items, amount)
 end

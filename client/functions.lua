@@ -46,6 +46,9 @@ function QBCore.Functions.GetCoords(entity)
 end
 
 function QBCore.Functions.HasItem(items, amount)
+    if GetResourceState('hate-dzinventory') == 'started' then
+        return exports['hate-dzinventory']:HasItem(items, amount)
+    end
     return exports['qb-inventory']:HasItem(items, amount)
 end
 

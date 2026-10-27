@@ -9,9 +9,10 @@ local varargMethods       = {
     'GetPlayerData', 'UpdateClient', 'SetJob', 'SetGang', 'Notify', 'HasItem',
     'SetJobDuty', 'SetPlayerData', 'SetMetaData', 'GetMetaData',
     'AddRep', 'RemoveRep', 'GetRep', 'AddMoney', 'RemoveMoney', 'SetMoney', 'GetMoney',
+    'AddItem', 'RemoveItem', 'GetItemByName', 'GetItemsByName', 'GetItemBySlot', 'SetInventory',
     'AddMethod', 'AddField',
 }
-local noargMethods        = { 'GetName', 'Save', 'Logout' }
+local noargMethods        = { 'GetName', 'Save', 'Logout', 'ClearInventory' }
 
 local function isCallable(value)
     if type(value) == 'function' then return true end
@@ -127,6 +128,77 @@ end
 
 function Player:HasItem(items, amount)
     return QBCore.Functions.HasItem(self.PlayerData.source, items, amount)
+end
+
+-- ─────────────────────────── inventory (hate-dzinventory / qb-inventory) ─────
+
+local function inventoryResource()
+    if GetResourceState('hate-dzinventory') == 'started' then return 'hate-dzinventory' end
+    if GetResourceState('qb-inventory') == 'started' then return 'qb-inventory' end
+end
+
+function Player:AddItem(item, amount, slot, info, reason)
+    local resource = inventoryResource()
+    if self.Offline or not resource then return false end
+    if resource == 'hate-dzinventory' then
+        return exports['hate-dzinventory']:AddItem(self.PlayerData.source, item, tonumber(amount) or 1, info, slot)
+    end
+    return exports['qb-inventory']:AddItem(self.PlayerData.source, item, amount, slot, info, reason)
+end
+
+function Player:RemoveItem(item, amount, slot, reason)
+    local resource = inventoryResource()
+    if self.Offline or not resource then return false end
+    if resource == 'hate-dzinventory' then
+        return exports['hate-dzinventory']:RemoveItem(self.PlayerData.source, item, tonumber(amount) or 1, slot)
+    end
+    return exports['qb-inventory']:RemoveItem(self.PlayerData.source, item, amount, slot, reason)
+end
+
+-- hate-dzinventory name lookups include owned backpacks; GetItemByName returns the summed amount.
+function Player:GetItemByName(item)
+    local resource = inventoryResource()
+    if self.Offline or not resource then return nil end
+    if resource == 'hate-dzinventory' then
+        return exports['hate-dzinventory']:GetItemByName(self.PlayerData.source, item)
+    end
+    return exports['qb-inventory']:GetItemByName(self.PlayerData.source, item)
+end
+
+function Player:GetItemsByName(item)
+    local resource = inventoryResource()
+    if self.Offline or not resource then return {} end
+    if resource == 'hate-dzinventory' then
+        return exports['hate-dzinventory']:GetItemsByName(self.PlayerData.source, item)
+    end
+    return exports['qb-inventory']:GetItemsByName(self.PlayerData.source, item)
+end
+
+function Player:GetItemBySlot(slot)
+    local resource = inventoryResource()
+    if self.Offline or not resource then return nil end
+    if resource == 'hate-dzinventory' then
+        return exports['hate-dzinventory']:GetItemBySlot(self.PlayerData.source, slot)
+    end
+    return exports['qb-inventory']:GetItemBySlot(self.PlayerData.source, slot)
+end
+
+function Player:ClearInventory()
+    local resource = inventoryResource()
+    if self.Offline or not resource then return false end
+    if resource == 'hate-dzinventory' then
+        return exports['hate-dzinventory']:ClearInventory(self.PlayerData.source)
+    end
+    return exports['qb-inventory']:ClearInventory(self.PlayerData.source)
+end
+
+function Player:SetInventory(items)
+    local resource = inventoryResource()
+    if self.Offline or not resource then return false end
+    if resource == 'hate-dzinventory' then
+        return exports['hate-dzinventory']:SetInventory(self.PlayerData.source, items)
+    end
+    return exports['qb-inventory']:SetInventory(self.PlayerData.source, items)
 end
 
 function Player:GetName()
